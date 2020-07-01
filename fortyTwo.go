@@ -7,9 +7,10 @@ import (
 	"strings"
 )
 
-var APIURL string = "https://api.intra.42.fr/v2/"
+var apiURL string = "https://api.intra.42.fr/"
 
-type sToken struct {
+// Struct with api info
+type ApiInfo struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
 	ExpiresIn   int    `json:"expires_in"`
@@ -17,11 +18,12 @@ type sToken struct {
 	CreatedAt   int    `json:"created_at"`
 }
 
-func NewClient(uid, secret, scope string) (sToken, error) {
-	var tokenJSON sToken
+// Get new token
+func NewClient(uid, secret, scope string) (ApiInfo, error) {
+	var tokenJSON ApiInfo
 
 	reader := strings.NewReader(`grant_type=client_credentials&client_id=` + uid + `&client_secret=` + secret + `&scope=` + scope)
-	req, err := http.NewRequest("POST", "https://api.intra.42.fr/oauth/token", reader)
+	req, err := http.NewRequest("POST", apiURL+"oauth/token", reader)
 	if err != nil {
 		return tokenJSON, err
 	}
@@ -43,4 +45,25 @@ func NewClient(uid, secret, scope string) (sToken, error) {
 	}
 
 	return tokenJSON, nil
+}
+
+// Post method
+// func (api ApiInfo) Post(url string) (*http.Response, error) {
+
+// }
+
+//Get method
+func (api ApiInfo) Get(url string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", apiURL+url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+api.AccessToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
