@@ -2,15 +2,17 @@ package fortytwo
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
-	"strings"
+	"os"
+	"time"
+
+	"github.com/sendgrid/rest"
+	"github.com/sirupsen/logrus"
 )
 
-var apiURL string = "https://api.intra.42.fr/"
+var apiURL string = "https://api.intra.42.fr"
 
-// Struct with api info
-type ApiInfo struct {
+// APIInfo Struct with api info
+type APIInfo struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
 	ExpiresIn   int    `json:"expires_in"`
@@ -18,52 +20,97 @@ type ApiInfo struct {
 	CreatedAt   int    `json:"created_at"`
 }
 
-// Get new token
-func NewClient(uid, secret, scope string) (ApiInfo, error) {
-	var tokenJSON ApiInfo
+// NewClient Get new token
+func (api APIInfo) NewClient(uid, secret, scope string) (APIInfo, error) {
+	var tokenJSON APIInfo
+	url := "/oauth/token"
 
-	reader := strings.NewReader(`grant_type=client_credentials&client_id=` + uid + `&client_secret=` + secret + `&scope=` + scope)
-	req, err := http.NewRequest("POST", apiURL+"oauth/token", reader)
-	if err != nil {
-		return tokenJSON, err
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	param := `grant_type=client_credentials&client_id=` +
+		uid +
+		`&client_secret=` +
+		secret +
+		`&scope=` +
+		scope
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return tokenJSON, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return tokenJSON, err
+	headers := map[string]string{
+		"Content-Type": "application/x-www-form-urlencoded",
 	}
 
-	if err = json.Unmarshal([]byte(body), &tokenJSON); err != nil {
+	resp, err := api.Post(url, []byte(param), headers)
+	if err != nil {
+		panic(err)
+	}
+
+	if resp.StatusCode != 200 {
+		panic("NewClient() : " + resp.Body)
+	}
+
+	if err = json.Unmarshal([]byte(resp.Body), &tokenJSON); err != nil {
 		return tokenJSON, err
+	}
+
+	// store it in env
+	err = os.Setenv("INTRA_TOKEN", tokenJSON.AccessToken)
+	if err != nil {
+		panic(err)
 	}
 
 	return tokenJSON, nil
 }
 
-// Post method
-// func (api ApiInfo) Post(url string) (*http.Response, error) {
+// CheckToken Renew token if expired
+func (api APIInfo) CheckToken() APIInfo {
 
-// }
+	var client APIInfo
+	var err error
+	now := time.Now()
+	// get new token if is expired
+	if int(now.Unix()) >= api.CreatedAt+api.ExpiresIn {
+		client, err = api.NewClient(os.Getenv("INTRA_CLIENT_ID"), os.Getenv("INTRA_CLIENT_SECRET"), "")
+		if err != nil {
+			panic(err)
+		}
+	}
 
-//Get method
-func (api ApiInfo) Get(url string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", apiURL+url, nil)
+	return client
+}
+
+// Get req
+func (api APIInfo) Get(url string, queryParams map[string]string, headers map[string]string) (resp *rest.Response, err error) {
+
+	request := rest.Request{
+		Method:      rest.Get,
+		BaseURL:     apiURL + url,
+		Headers:     headers,
+		QueryParams: queryParams,
+	}
+
+	logrus.Debug("Get Request:", request)
+
+	response, err := rest.API(request)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+api.AccessToken)
 
-	resp, err := http.DefaultClient.Do(req)
+	return response, nil
+}
+
+// Post req
+func (api APIInfo) Post(url string, body []byte, headers map[string]string) (resp *rest.Response, err error) {
+
+	request := rest.Request{
+		Method:  rest.Post,
+		BaseURL: apiURL + url,
+		Body:    body,
+		Headers: headers,
+	}
+
+	logrus.Debug("Post Request:", request)
+
+	response, err := rest.API(request)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	return response, nil
 }
