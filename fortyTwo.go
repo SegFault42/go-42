@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/sendgrid/rest"
-	"github.com/sirupsen/logrus"
 )
 
 var apiURL string = "https://api.intra.42.fr"
@@ -66,7 +65,7 @@ func (api APIInfo) CheckToken() APIInfo {
 	now := time.Now()
 	// get new token if is expired
 	if int(now.Unix()) >= api.CreatedAt+api.ExpiresIn {
-		client, err = api.NewClient(os.Getenv("INTRA_CLIENT_ID"), os.Getenv("INTRA_CLIENT_SECRET"), "")
+		client, err = api.NewClient(os.Getenv("INTRA_CLIENT_ID"), os.Getenv("INTRA_CLIENT_SECRET"), os.Getenv("INTRA_SCOPE"))
 		if err != nil {
 			panic(err)
 		}
@@ -84,8 +83,6 @@ func (api APIInfo) Get(url string, queryParams map[string]string, headers map[st
 		Headers:     headers,
 		QueryParams: queryParams,
 	}
-
-	logrus.Debug("Get Request:", request)
 
 	response, err := rest.API(request)
 	if err != nil {
@@ -105,7 +102,23 @@ func (api APIInfo) Post(url string, body []byte, headers map[string]string) (res
 		Headers: headers,
 	}
 
-	logrus.Debug("Post Request:", request)
+	response, err := rest.API(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// Patch req
+func (api APIInfo) Patch(url string, body []byte, headers map[string]string) (resp *rest.Response, err error) {
+
+	request := rest.Request{
+		Method:  rest.Patch,
+		BaseURL: apiURL + url,
+		Body:    body,
+		Headers: headers,
+	}
 
 	response, err := rest.API(request)
 	if err != nil {
