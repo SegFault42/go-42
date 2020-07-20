@@ -1,4 +1,4 @@
-module gofortyTwo
+module goFortyTwo
 
 go 1.14
 
