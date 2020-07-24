@@ -1,4 +1,4 @@
-module goFortyTwo
+module github.com/segfault42/goFortyTwo
 
 go 1.14
 
