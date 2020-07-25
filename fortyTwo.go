@@ -127,3 +127,20 @@ func (api APIInfo) Patch(url string, body []byte, headers map[string]string) (re
 
 	return response, nil
 }
+
+// Delete req
+func (api APIInfo) Delete(url string, queryParams map[string]string, headers map[string]string) (resp *rest.Response, err error) {
+
+	request := rest.Request{
+		Method:      rest.Delete,
+		BaseURL:     apiURL + url,
+		Headers:     headers,
+		QueryParams: queryParams,
+	}
+	response, err := rest.Send(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
