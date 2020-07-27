@@ -2,6 +2,7 @@ package fortytwo
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"strconv"
 )
@@ -29,6 +30,9 @@ func (api APIInfo) LoginToUserID(login string) (string, error) {
 
 	if err = json.Unmarshal([]byte(resp.Body), &user); err != nil {
 		return "", err
+	}
+	if len(user) == 0 {
+		return "", errors.New("Login not found")
 	}
 
 	return strconv.Itoa(user[0].UserID), nil
