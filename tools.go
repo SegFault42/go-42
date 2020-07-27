@@ -2,7 +2,6 @@ package fortytwo
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"strconv"
 )
@@ -28,7 +27,6 @@ func (api APIInfo) LoginToUserID(login string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println(resp.Body)
 	if err = json.Unmarshal([]byte(resp.Body), &user); err != nil {
 		return "", err
 	}
