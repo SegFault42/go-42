@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func (api APIInfo) LoginToUserID(login string) (string, error) {
@@ -14,6 +15,7 @@ func (api APIInfo) LoginToUserID(login string) (string, error) {
 	}
 	var user sUser
 
+	login = strings.ToLower(login)
 	url := "/v2/users"
 	headers := map[string]string{
 		"Authorization": "Bearer " + os.Getenv("INTRA_TOKEN"),
