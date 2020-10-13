@@ -3,6 +3,7 @@ package fortytwo
 import (
 	"encoding/json"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/sendgrid/rest"
@@ -41,7 +42,7 @@ func (api APIInfo) NewClient(uid, secret, scope string) (APIInfo, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		panic("NewClient() : " + resp.Body)
+		panic("NewClient() : " + strconv.Itoa(resp.StatusCode) + resp.Body)
 	}
 
 	if err = json.Unmarshal([]byte(resp.Body), &tokenJSON); err != nil {
@@ -89,6 +90,7 @@ func (api APIInfo) Get(url string, queryParams map[string]string, headers map[st
 		return nil, err
 	}
 
+	time.Sleep(time.Second * 2)
 	return response, nil
 }
 
@@ -107,6 +109,7 @@ func (api APIInfo) Post(url string, body []byte, headers map[string]string) (res
 		return nil, err
 	}
 
+	time.Sleep(time.Second * 2)
 	return response, nil
 }
 
@@ -125,6 +128,7 @@ func (api APIInfo) Patch(url string, body []byte, headers map[string]string) (re
 		return nil, err
 	}
 
+	time.Sleep(time.Second * 2)
 	return response, nil
 }
 
@@ -142,5 +146,6 @@ func (api APIInfo) Delete(url string, queryParams map[string]string, headers map
 		return nil, err
 	}
 
+	time.Sleep(time.Second * 2)
 	return response, nil
 }
